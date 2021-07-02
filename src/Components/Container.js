@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import Card  from "./Card";
 import { useEffect } from "react"
+import Spinner from './Spinner' 
 
 
 export default function Container() {
@@ -15,15 +16,17 @@ export default function Container() {
     const [icon, setIcon] = useState("")
     const [isCelsius, setIsCelsius] = useState(true)
     const [temperatureUnit, setTemperatureUnit] = useState(" °C")
+    const [statusCode, setStatutsCode] = useState("")
 
     const setSiteData = (data) =>{        
         setCity(data.name+" - "+data.sys.country);        
         setTemperature(data.main.temp);        
         setTemperatureFeelsLike(data.main.feels_like);        
-        setHumidity(data.main.humidity+" %");        
+        setHumidity(data.main.humidity);        
         setWeather(data.weather[0].main+" : "+data.weather[0].description);        
-        setWind(data.wind.speed+" m/s");
+        setWind(data.wind.speed);
         setIcon(`http://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`)
+        setStatutsCode(data.cod)
     }
 
     useEffect(() => {
@@ -40,7 +43,7 @@ export default function Container() {
           }
           
           function error(err) {
-            console.warn(`ERROR(${err.code}): ${err.message}`);
+            alert(`ERROR(${err.code}): ${err.message} - RECARGA LA PAGINA`);
           }
           
           navigator.geolocation.getCurrentPosition(success, error, options);
@@ -61,7 +64,7 @@ export default function Container() {
     }, [coordLatitude, coordLongitude])
 
     useEffect(() => {
-        if(! isCelsius){
+        if( !(isCelsius) ){
             setTemperature( prevState => {
                     let newState =  (prevState * 9/5) + 32 ;
                     return newState.toFixed(2);
@@ -84,27 +87,56 @@ export default function Container() {
         }        
     }, [isCelsius])
 
-    const toCelsuisFarenheit = () =>{
-        setIsCelsius(isCelsius ? false : true)
+    useEffect(() => {
+        setStatutsCode( prevState => { 
+            console.log(prevState)
+            return prevState })
+        
+    }, [statusCode])
+
+    const toCelsiusFarenheit = () =>{
+        setIsCelsius( (isCelsius ? false : true) )
     }
 
-    return (
-        <>
-          <div className="container">
-            <div className="row vh-100 justify-content-center align-items-center">
-                <Card 
-                    city={city} 
-                    temperature={temperature}
-                    temperatureFeelsLike={temperatureFeelsLike}
-                    humidity={humidity}
-                    weather={weather}
-                    wind={wind}
-                    icon={icon}
-                    conversion = {toCelsuisFarenheit}
-                    temperatureUnit={temperatureUnit}
-                />
-            </div>
-          </div>  
-        </>
-    )
+    if (statusCode === 200) {
+        return (
+            <>
+              <div className="container">
+                <div className="row vh-100 justify-content-center align-items-center">
+                    <h1>OJO CON EL CONSOLE.LOG DEL FETCH!!!</h1>                
+                    <Card 
+                        city={city} 
+                        temperature={temperature}
+                        temperatureFeelsLike={temperatureFeelsLike}
+                        humidity={humidity}
+                        weather={weather}
+                        wind={wind}
+                        icon={icon}
+                        conversion = {toCelsiusFarenheit}
+                        temperatureUnit={temperatureUnit}
+                    />
+                </div>
+              </div>  
+            </>
+        )
+        
+    } else {
+        return (
+            <>
+                <div className="container">
+                    <div className=" row vh-100 justify-content-center align-items-center">
+                        <div className="col">
+                            <div className="card">
+                                <div className="card-body text-center">
+                                    <Spinner />
+                                </div>
+                            </div>
+                        </div>                        
+                    </div>
+              </div>                
+            </>            
+            )
+    }
+
+    
 }
